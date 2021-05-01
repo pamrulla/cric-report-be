@@ -1,0 +1,14 @@
+FROM node:alpine
+ENV NODE_ENV=production
+
+WORKDIR /app
+
+COPY package.json package-lock.json ./
+RUN npm install --frozen-lockfile
+
+COPY . .
+
+EXPOSE 8080
+
+CMD ["npm", "run", "start"]
+
