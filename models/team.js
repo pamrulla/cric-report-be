@@ -9,7 +9,7 @@ const teamScheme = new Scheme({
     teamRating: Number,
     count: Number,
     extras: String,
-    total: Number,
+    total: String,
     overs: Number,
     playingIds: [String],
 });

@@ -132,7 +132,7 @@ const TeamType = new graphql.GraphQLObjectType({
         teamRating: {type: graphql.GraphQLFloat},
         count: {type: graphql.GraphQLInt},
         extras: {type: graphql.GraphQLInt},
-        total: {type: graphql.GraphQLInt},
+        total: {type: graphql.GraphQLString},
         overs: {type: graphql.GraphQLFloat},
     })
 });
@@ -191,7 +191,13 @@ const RootQuery = new graphql.GraphQLObjectType({
             resolve(parent, args) {
                 return Player.find({});
             }
-        }
+        },
+        tournaments: {
+            type: graphql.GraphQLList(TournamentType),
+            resolve(parent, args) {
+                return Tournament.find({});
+            }
+        },
     }
 });
 
@@ -246,7 +252,7 @@ const TeamInput = new graphql.GraphQLInputObjectType({
         teamRating: {type: graphql.GraphQLNonNull(graphql.GraphQLFloat)},
         count: {type: graphql.GraphQLNonNull(graphql.GraphQLInt)},
         extras: {type: graphql.GraphQLNonNull(graphql.GraphQLInt)},
-        total: {type: graphql.GraphQLNonNull(graphql.GraphQLInt)},
+        total: {type: graphql.GraphQLNonNull(graphql.GraphQLString)},
         overs: {type: graphql.GraphQLNonNull(graphql.GraphQLFloat)},
         batting: {type: graphql.GraphQLNonNull(graphql.GraphQLList(BattingInput))},
         bowling: {type: graphql.GraphQLNonNull(graphql.GraphQLList(BowlingInput))},
@@ -308,14 +314,14 @@ const Mutation = new graphql.GraphQLObjectType({
                 input: {type: graphql.GraphQLNonNull(MatchRatingPayload)}
             },
             resolve: async (parent, args) => {
-                await args.input.teams.forEach(async t => {
+                for (let index = 0; index < args.input.teams.length; index++) {
+                    const t = args.input.teams[index];
                     await Team.updateOne({_id: t.id}, {teamRating: t.teamRating, count: t.count});
-                    
-                    await t.rating.forEach(async bw => {
-                        await PlayerRating.updateOne({teamId: t.id, playerId: bw.playerId, rating: bw.rating});
-                    });
-                });
-                
+                    for (let i = 0; i < t.rating.length; i++) {
+                        const bw = t.rating[i];
+                        await PlayerRating.updateOne({teamId: t.id, playerId: bw.playerId}, {rating: bw.rating});
+                    }                    
+                }
                 return Match.findById(args.input.id);
             }
         },
@@ -436,7 +442,7 @@ const Mutation = new graphql.GraphQLObjectType({
                 teamRating: {type: graphql.GraphQLFloat},
                 count: {type: graphql.GraphQLInt},
                 extras: {type: graphql.GraphQLInt},
-                total: {type: graphql.GraphQLInt},
+                total: {type: graphql.GraphQLString},
                 overs: {type: graphql.GraphQLFloat},
             },
             resolve(parent, args) {
